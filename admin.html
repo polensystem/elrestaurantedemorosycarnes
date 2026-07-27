@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin · Artes generados</title>
+<title>Admin · El Restaurante de Moros y Carnes</title>
 <style>
-  :root{ --bg:#F5F1E6; --panel:#fff; --line:#e4e0d5; --ink:#1d1b18; --muted:#6f6a63; }
+  :root{ --bg:#F5F1E6; --panel:#fff; --line:#e4e0d5; --ink:#1d1b18; --muted:#6f6a63; --danger:#b3261e; }
   *{box-sizing:border-box;}
   body{margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased;}
 
@@ -14,23 +14,38 @@
   .card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:32px 28px; width:100%; max-width:360px; box-shadow:0 18px 50px rgba(0,0,0,.10);}
   .card h1{font-size:19px; margin:0 0 4px;}
   .card p{font-size:13px; color:var(--muted); margin:0 0 22px;}
-  label{display:block; font-size:11px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin:0 0 7px; font-weight:600;}
-  input{width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:14px; background:#fbfaf8; outline:none; margin-bottom:16px;}
-  input:focus{border-color:var(--ink);}
+  label.f{display:block; font-size:11px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin:0 0 7px; font-weight:600;}
+  input.t{width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:16px; background:#fbfaf8; outline:none; margin-bottom:16px;}
+  input.t:focus{border-color:var(--ink);}
   button.primary{width:100%; padding:13px; border:none; border-radius:10px; background:var(--ink); color:#fff; font-size:14px; font-weight:600; cursor:pointer;}
   button.primary:hover{opacity:.92;}
   button.primary:disabled{opacity:.5; cursor:default;}
-  .err{color:#b3261e; font-size:12.5px; margin:0 0 14px; min-height:16px;}
+  .err{color:var(--danger); font-size:12.5px; margin:0 0 14px; min-height:16px;}
 
   /* App */
-  .topbar{position:sticky; top:0; z-index:5; background:rgba(245,241,230,.9); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); padding:16px 22px; display:flex; align-items:center; justify-content:space-between;}
-  .topbar h2{font-size:16px; margin:0;}
+  .topbar{position:sticky; top:0; z-index:6; background:rgba(245,241,230,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); padding:15px 22px; display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .topbar h2{font-size:16px; margin:0; display:inline;}
   .topbar .count{font-size:12.5px; color:var(--muted); margin-left:10px;}
   .topbar button{padding:8px 14px; border:1px solid var(--line); background:#fff; border-radius:9px; font-size:12.5px; cursor:pointer;}
   .topbar button:hover{border-color:var(--ink);}
+
+  .bar{position:sticky; top:52px; z-index:5; display:flex; align-items:center; justify-content:space-between; gap:12px;
+       padding:11px 22px; background:#1d1b18; color:#fff;}
+  .bar .selcount{font-size:13px; font-weight:600;}
+  .bar .actions{display:flex; gap:8px;}
+  .bar button{padding:8px 14px; border-radius:9px; font-size:12.5px; cursor:pointer; border:1px solid rgba(255,255,255,.25); background:transparent; color:#fff;}
+  .bar button:hover{background:rgba(255,255,255,.12);}
+  .bar button.danger{background:var(--danger); border-color:var(--danger); font-weight:600;}
+  .bar button.danger:hover{opacity:.9; background:var(--danger);}
+
   .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:18px; padding:22px;}
-  .item{background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; display:flex; flex-direction:column;}
+  .item{position:relative; background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; display:flex; flex-direction:column;}
+  .item.checked{outline:3px solid var(--ink); outline-offset:-1px;}
   .item img{width:100%; display:block; background:#eee; aspect-ratio:4/5; object-fit:contain; border-bottom:1px solid var(--line);}
+  .checkwrap{position:absolute; top:9px; left:9px; z-index:2; background:rgba(255,255,255,.92); border-radius:7px; padding:5px; line-height:0; box-shadow:0 1px 4px rgba(0,0,0,.15); cursor:pointer;}
+  .checkwrap input{width:19px; height:19px; margin:0; cursor:pointer; accent-color:#1d1b18;}
+  .del{position:absolute; top:9px; right:9px; z-index:2; width:32px; height:32px; border:none; border-radius:8px; background:rgba(255,255,255,.92); cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,.15); font-size:15px; line-height:1; display:flex; align-items:center; justify-content:center;}
+  .del:hover{background:var(--danger); color:#fff;}
   .meta{padding:11px 12px; font-size:12px; line-height:1.5;}
   .meta .nuevo{font-weight:700; word-break:break-word;}
   .meta .antes{color:var(--muted); text-decoration:line-through;}
@@ -49,10 +64,10 @@
     <h1>Panel de admin</h1>
     <p>Artes generados en la campaña. Ingresa con tu cuenta de administrador.</p>
     <p class="err" id="err"></p>
-    <label>Correo</label>
-    <input type="email" id="email" placeholder="tucorreo@ejemplo.com" autocomplete="username">
-    <label>Contraseña</label>
-    <input type="password" id="pass" placeholder="••••••••" autocomplete="current-password">
+    <label class="f">Correo</label>
+    <input type="email" id="email" class="t" placeholder="tucorreo@ejemplo.com" autocomplete="username">
+    <label class="f">Contraseña</label>
+    <input type="password" id="pass" class="t" placeholder="••••••••" autocomplete="current-password">
     <button class="primary" id="loginBtn">Entrar</button>
   </div>
 </div>
@@ -60,8 +75,16 @@
 <!-- APP -->
 <div id="app" style="display:none">
   <div class="topbar">
-    <div><h2 style="display:inline">Artes generados</h2><span class="count" id="count"></span></div>
+    <div><h2>Artes generados</h2><span class="count" id="count"></span></div>
     <button id="logout">Cerrar sesión</button>
+  </div>
+  <div class="bar" id="bar" style="display:none">
+    <span class="selcount" id="selcount">0 seleccionados</span>
+    <div class="actions">
+      <button id="selall">Seleccionar todo</button>
+      <button id="clearsel">Quitar selección</button>
+      <button class="danger" id="delsel">Borrar seleccionados</button>
+    </div>
   </div>
   <div id="content"><div class="loading">Cargando…</div></div>
 </div>
@@ -71,7 +94,6 @@
 const SUPA_URL = "https://ihpxtvfhtjquvyonahhv.supabase.co";
 const SUPA_KEY = "sb_publishable_l-7H9HDSpxrs2GU3DXKHiA_yRMQ3yUA";
 const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-
 const $ = id => document.getElementById(id);
 
 async function doLogin(){
@@ -84,7 +106,6 @@ async function doLogin(){
 }
 $('loginBtn').onclick = doLogin;
 $('pass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
-
 $('logout').onclick = async ()=>{ await supa.auth.signOut(); location.reload(); };
 
 async function showApp(){
@@ -97,14 +118,15 @@ function fmtDate(s){
   try{ return new Date(s).toLocaleString('es-EC', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
   catch(e){ return s; }
 }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 async function loadGallery(){
+  updateBar(); // reset
   const { data, error } = await supa.from('generados').select('*').order('created_at',{ascending:false});
   if(error){ $('content').innerHTML = '<div class="empty">Error al cargar: '+error.message+'</div>'; return; }
   if(!data || !data.length){ $('content').innerHTML = '<div class="empty">Aún no se ha generado ningún arte.</div>'; $('count').textContent=''; return; }
   $('count').textContent = '· ' + data.length + ' en total';
 
-  // URLs firmadas (privadas) en lote
   const paths = data.map(d=>d.image_path).filter(Boolean);
   let signed = {};
   if(paths.length){
@@ -117,8 +139,10 @@ async function loadGallery(){
   data.forEach(d=>{
     const url = signed[d.image_path] || '';
     const el = document.createElement('div');
-    el.className='item';
+    el.className='item'; el.dataset.id=d.id;
     el.innerHTML =
+      '<label class="checkwrap"><input type="checkbox" class="sel" data-id="'+d.id+'" data-path="'+escapeHtml(d.image_path||'')+'"></label>'+
+      '<button class="del" title="Borrar este arte" data-id="'+d.id+'" data-path="'+escapeHtml(d.image_path||'')+'">🗑</button>'+
       (url ? '<img loading="lazy" src="'+url+'">' : '<div style="aspect-ratio:4/5;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px">sin imagen</div>') +
       '<div class="meta">'+
         '<div class="nuevo">'+escapeHtml(d.nombre_nuevo||'')+'</div>'+
@@ -135,7 +159,55 @@ async function loadGallery(){
   $('content').appendChild(grid);
 }
 
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+// --- Selección múltiple ---
+function selectedBoxes(){ return Array.from(document.querySelectorAll('.sel:checked')); }
+function updateBar(){
+  const boxes = selectedBoxes();
+  const n = boxes.length;
+  $('bar').style.display = n ? 'flex' : 'none';
+  $('selcount').textContent = n + (n===1?' seleccionado':' seleccionados');
+  // marca visual de las tarjetas
+  document.querySelectorAll('.item').forEach(it=>{
+    const cb = it.querySelector('.sel');
+    it.classList.toggle('checked', cb && cb.checked);
+  });
+}
+
+// delegación de eventos en el contenido
+$('content').addEventListener('change', e=>{ if(e.target.classList.contains('sel')) updateBar(); });
+$('content').addEventListener('click', async e=>{
+  const btn = e.target.closest('.del');
+  if(!btn) return;
+  const item = { id: btn.dataset.id, image_path: btn.dataset.path };
+  if(confirm('¿Borrar este arte? Esta acción no se puede deshacer.')){
+    await deleteItems([item]);
+  }
+});
+
+$('selall').onclick = ()=>{ document.querySelectorAll('.sel').forEach(cb=>cb.checked=true); updateBar(); };
+$('clearsel').onclick = ()=>{ document.querySelectorAll('.sel').forEach(cb=>cb.checked=false); updateBar(); };
+$('delsel').onclick = async ()=>{
+  const boxes = selectedBoxes();
+  if(!boxes.length) return;
+  if(!confirm('¿Borrar '+boxes.length+' arte(s) seleccionado(s)? Esta acción no se puede deshacer.')) return;
+  const items = boxes.map(cb=>({ id:cb.dataset.id, image_path:cb.dataset.path }));
+  await deleteItems(items);
+};
+
+async function deleteItems(items){
+  const paths = items.map(i=>i.image_path).filter(Boolean);
+  const ids = items.map(i=>i.id).filter(Boolean);
+  try{
+    if(paths.length) await supa.storage.from('artes').remove(paths);
+    if(ids.length){
+      const { error } = await supa.from('generados').delete().in('id', ids);
+      if(error) throw error;
+    }
+  }catch(e){
+    alert('No se pudo borrar: ' + (e.message||e) + '\n\n(Revisa que hayas corrido el SQL de permisos de borrado en Supabase.)');
+  }
+  await loadGallery();
+}
 
 // ¿Sesión ya activa? (recuerda el login)
 (async ()=>{
