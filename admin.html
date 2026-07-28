@@ -28,6 +28,9 @@
   .topbar .count{font-size:12.5px; color:var(--muted); margin-left:10px;}
   .topbar button{padding:8px 14px; border:1px solid var(--line); background:#fff; border-radius:9px; font-size:12.5px; cursor:pointer;}
   .topbar button:hover{border-color:var(--ink);}
+  .topbar .toggle{padding:7px 11px; border:1px dashed var(--line); background:transparent; color:var(--muted); font-size:11.5px;}
+  .topbar .toggle:hover{border-color:var(--ink); color:var(--ink);}
+  .topbar .toggle.on{background:var(--ink); color:#fff; border-style:solid; border-color:var(--ink);}
 
   .bar{position:sticky; top:52px; z-index:5; display:flex; align-items:center; justify-content:space-between; gap:12px;
        padding:11px 22px; background:#1d1b18; color:#fff;}
@@ -76,7 +79,10 @@
 <div id="app" style="display:none">
   <div class="topbar">
     <div><h2>Artes generados</h2><span class="count" id="count"></span></div>
-    <button id="logout">Cerrar sesión</button>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button id="dedupeBtn" class="toggle" title="Colapsar duplicados">Sin duplicados</button>
+      <button id="logout">Cerrar sesión</button>
+    </div>
   </div>
   <div class="bar" id="bar" style="display:none">
     <span class="selcount" id="selcount">0 seleccionados</span>
@@ -120,14 +126,41 @@ function fmtDate(s){
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+let allRows = [];
+let dedupe = false;
+
+$('dedupeBtn').onclick = ()=>{
+  dedupe = !dedupe;
+  $('dedupeBtn').classList.toggle('on', dedupe);
+  $('dedupeBtn').textContent = dedupe ? 'Mostrando únicos' : 'Sin duplicados';
+  renderGallery();
+};
+
+function dedupeRows(rows){
+  const seen = new Set(), out = [];
+  for(const d of rows){                 // ya vienen ordenados del más nuevo al más viejo
+    const key = (d.marca_anterior||'')+'|'+(d.nombre_nuevo||'')+'|'+(d.formato||'');
+    if(seen.has(key)) continue;         // conserva solo el más reciente de cada combinación
+    seen.add(key); out.push(d);
+  }
+  return out;
+}
+
 async function loadGallery(){
-  updateBar(); // reset
+  updateBar();
   const { data, error } = await supa.from('generados').select('*').order('created_at',{ascending:false});
   if(error){ $('content').innerHTML = '<div class="empty">Error al cargar: '+error.message+'</div>'; return; }
-  if(!data || !data.length){ $('content').innerHTML = '<div class="empty">Aún no se ha generado ningún arte.</div>'; $('count').textContent=''; return; }
-  $('count').textContent = '· ' + data.length + ' en total';
+  allRows = data || [];
+  await renderGallery();
+}
 
-  const paths = data.map(d=>d.image_path).filter(Boolean);
+async function renderGallery(){
+  updateBar();
+  if(!allRows.length){ $('content').innerHTML = '<div class="empty">Aún no se ha generado ningún arte.</div>'; $('count').textContent=''; return; }
+  const rows = dedupe ? dedupeRows(allRows) : allRows;
+  $('count').textContent = dedupe ? ('· '+rows.length+' únicos (de '+allRows.length+')') : ('· '+allRows.length+' en total');
+
+  const paths = rows.map(d=>d.image_path).filter(Boolean);
   let signed = {};
   if(paths.length){
     const { data:urls } = await supa.storage.from('artes').createSignedUrls(paths, 3600);
@@ -136,7 +169,7 @@ async function loadGallery(){
 
   const grid = document.createElement('div');
   grid.className='grid';
-  data.forEach(d=>{
+  rows.forEach(d=>{
     const url = signed[d.image_path] || '';
     const el = document.createElement('div');
     el.className='item'; el.dataset.id=d.id;
