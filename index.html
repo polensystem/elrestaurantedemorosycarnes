@@ -224,10 +224,11 @@ function fitFont(text, base, maxW){
   return s;
 }
 
-async function render(){
+async function render(){ try{ await document.fonts.load('160px "Boyrun"'); }catch(e){} draw(); }
+
+function draw(){
   cv.width=state.w; cv.height=state.h;
   ctx.fillStyle=BG; ctx.fillRect(0,0,state.w,state.h);
-  try{ await document.fonts.load('160px "Boyrun"'); }catch(e){}
   ctx.fillStyle=INK;
   ctx.textBaseline='alphabetic';
   const cx=state.w/2;
@@ -310,42 +311,75 @@ async function logToSupabase(blob, isStory){
   }catch(e){ console.warn('registro Supabase falló:', e); }
 }
 
-async function buildArt(){
-  await render();
+// Registra cada arte UNA sola vez; clics repetidos del mismo arte no crean duplicados
+let lastLoggedKey = null;
+async function logOnce(blob, isStory){
+  const key = (state.marca||'')+'|'+prepared()+'|'+(isStory?'h':'p');
+  if(key === lastLoggedKey) return;
+  lastLoggedKey = key;
+  await logToSupabase(blob, isStory);
+}
+
+const isIOS = ()=> /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+
+// Toma el arte del lienzo (que siempre está actualizado) de forma SÍNCRONA.
+// Clave en iOS: si hay un await antes de descargar/compartir, el navegador
+// invalida el gesto del usuario y la acción se cancela en silencio.
+function makeArt(){
+  draw();
   const isStory = state.h===1920;
   const name = (isStory?'arte-historia-1080x1920':'arte-post-1080x1350')+'.jpg';
-  const blob = await new Promise(r=>cv.toBlob(r,'image/jpeg',0.95));
-  return { blob, name, isStory };
+  const dataUrl = cv.toDataURL('image/jpeg', 0.95);
+  return { dataUrl, name, isStory };
+}
+function dataUrlToBlob(dataUrl){
+  const [head,b64] = dataUrl.split(',');
+  const mime = (head.match(/:(.*?);/)||[])[1] || 'image/jpeg';
+  const bin = atob(b64); const arr = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  return new Blob([arr], {type:mime});
+}
+function anchorDownload(dataUrl, name){
+  const a=document.createElement('a'); a.href=dataUrl; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
 }
 
-function descargar(blob, name){
-  const url = URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download=name; a.click();
-  setTimeout(()=>URL.revokeObjectURL(url), 5000);
-}
-
-// Descargar JPG
-document.getElementById('dl').onclick = async ()=>{
+// DESCARGAR
+document.getElementById('dl').onclick = ()=>{
   msg('');
-  const { blob, name, isStory } = await buildArt();
-  descargar(blob, name);
-  logToSupabase(blob, isStory);
+  const { dataUrl, name, isStory } = makeArt();
+  const blob = dataUrlToBlob(dataUrl);
+  const file = new File([blob], name, {type:'image/jpeg'});
+  if(isIOS()){
+    // En iPhone/iPad no existe "descargar a carpeta"; la vía real para
+    // guardar en Fotos es la hoja de compartir del sistema.
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file]}).catch(()=>{});
+    }else{
+      const u=URL.createObjectURL(blob); window.open(u,'_blank');
+      msg('Mantén presionada la imagen y elige “Guardar en Fotos”.');
+      setTimeout(()=>URL.revokeObjectURL(u), 30000);
+    }
+  }else{
+    anchorDownload(dataUrl, name);   // escritorio y Android
+  }
+  logOnce(blob, isStory);
 };
 
-// Compartir (en celular abre Instagram / WhatsApp / etc. con la imagen adjunta)
+// COMPARTIR (celular: abre Instagram / WhatsApp / etc. con la imagen adjunta)
 const shareBtn = document.getElementById('share');
-shareBtn.onclick = async ()=>{
+shareBtn.onclick = ()=>{
   msg('');
-  const { blob, name, isStory } = await buildArt();
-  logToSupabase(blob, isStory);
+  const { dataUrl, name, isStory } = makeArt();
+  const blob = dataUrlToBlob(dataUrl);
   const file = new File([blob], name, {type:'image/jpeg'});
   if(navigator.canShare && navigator.canShare({files:[file]})){
-    try{ await navigator.share({ files:[file], text:'@elrestaurantedemorosycarnes' }); }
-    catch(e){ /* el usuario canceló, sin problema */ }
+    navigator.share({files:[file], text:'@elrestaurantedemorosycarnes'}).catch(()=>{});
   }else{
-    descargar(blob, name);
+    anchorDownload(dataUrl, name);
     msg('Tu equipo no permite compartir directo — descargamos la imagen para que la subas a Instagram.');
   }
+  logOnce(blob, isStory);
 };
 
 // En escritorio (sin compartir de archivos) el botón principal es Descargar
