@@ -70,7 +70,7 @@
   <div class="panel">
     <h1>Te invitamos a apoyarnos en este camino hacia nuestra nueva esencia.</h1>
     <p class="sub">Aunque ya no tengamos nuestro nombre original, seguimos con las mismas ganas y el mismo corazón con el que creamos todo desde el día uno, en esos portones de nuestro hogar en Samanes donde nació esta historia.</p>
-    <p class="cta">¡Crea tu nombre que te describe y súmate!</p>
+    <p class="cta">¡Crea el nombre que, sin tener que decir tu nombre, te describe! Y súmate</p>
 
     <div class="group">
       <label class="lbl">Formato</label>
@@ -82,12 +82,12 @@
 
     <div class="group">
       <label class="lbl">Marca/Nombre original (saldrá tachada)</label>
-      <input type="text" id="marca" value="Mi nombre" placeholder="Ej: mi nombre de siempre">
+      <input type="text" id="marca" value="Escribe tu nombre aquí" placeholder="Ej: mi nombre de siempre">
     </div>
 
     <div class="group">
       <label class="lbl">Otra forma en la que podemos llamarte:</label>
-      <textarea id="text" placeholder="Ej: también puedo llamarme así">también puedo llamarme así</textarea>
+      <textarea id="text" placeholder="Ej: cómo podríamos llamarte">Escribe aquí cómo podríamos llamarte</textarea>
     </div>
 
     <div class="group">
@@ -135,7 +135,7 @@ const FOOTER = [
   {t:"NO NECESITA NOMBRE.", bold:false}
 ];
 
-const state = { w:1080, h:1350, marca:"Mi nombre", text:"también puedo llamarme así", size:120, sizes:{post:120, story:150} };
+const state = { w:1080, h:1350, marca:"Escribe tu nombre aquí", text:"Escribe aquí cómo podríamos llamarte", size:120, sizes:{post:120, story:150} };
 const fmtKey = ()=> state.h===1920 ? 'story' : 'post';
 
 const cv = document.getElementById('cv');
